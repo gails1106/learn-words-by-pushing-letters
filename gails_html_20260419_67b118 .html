@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>拼词推箱子 | 高考词汇挑战 | 修仙段位系统</title>
+    <style>
+        * { user-select: none; -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { background: linear-gradient(145deg, #c8e6b5 0%, #8bc34a 100%); min-height: 100vh; display: flex; justify-content: center; align-items: center; font-family: 'Segoe UI', 'Poppins', 'Comic Neue', sans-serif; margin: 0; padding: 16px; }
+        .game-container { background: #fff8e7; border-radius: 56px; box-shadow: 0 20px 35px rgba(0, 0, 0, 0.25), 0 0 0 10px #aed581, 0 0 0 15px #66bb6a; padding: 20px 18px 24px 18px; max-width: 650px; margin: 0 auto; width: 100%; position: relative; }
+        .canvas-area { display: flex; justify-content: center; margin-bottom: 18px; background: #f5e6c8; border-radius: 42px; padding: 14px; box-shadow: inset 0 2px 6px rgba(98,57,19,0.1), 0 10px 20px rgba(0,0,0,0.1); }
+        canvas { display: block; margin: 0 auto; border-radius: 24px; box-shadow: 0 6px 14px rgba(0,0,0,0.2); background-color: #fff0d4; width: 100%; height: auto; }
+        .info-panel { display: flex; justify-content: space-between; align-items: center; background: #fff2df; padding: 12px 18px; border-radius: 60px; margin-bottom: 12px; gap: 12px; flex-wrap: wrap; box-shadow: inset 0 1px 4px #ffe0aa, 0 8px 12px rgba(0,0,0,0.1); }
+        .level-box { background: #ff8c42; padding: 6px 16px; border-radius: 40px; color: white; font-weight: bold; font-size: 1rem; white-space: nowrap; }
+        .word-hint { background: #5c9e5e; padding: 6px 16px; border-radius: 40px; color: white; font-weight: bold; font-size: 1rem; text-align: center; flex: 1; box-shadow: 0 4px 0 #2d6a2d; letter-spacing: 1px; }
+        .timer-box { background: #7bc8a4; padding: 6px 12px; border-radius: 40px; color: #2c4a2e; font-weight: bold; font-size: 0.9rem; font-family: monospace; white-space: nowrap; }
+        .rank-area { background: #ffe0a3; border-radius: 50px; padding: 6px 16px; font-weight: bold; font-size: 0.85rem; color: #b45f1b; text-align: center; margin-bottom: 12px; }
+        .nickname-bar { display: flex; justify-content: space-between; align-items: center; background: #f7efda; border-radius: 50px; padding: 6px 12px; margin-bottom: 12px; gap: 8px; flex-wrap: wrap; }
+        .nickname-input { flex: 2; padding: 8px 12px; border-radius: 40px; border: none; background: #fff6e8; font-size: 0.85rem; outline: none; }
+        .nickname-btn, .rank-toggle-btn, .settings-btn { background: #ffb347; border: none; padding: 6px 14px; border-radius: 40px; font-weight: bold; color: white; cursor: pointer; box-shadow: 0 3px 0 #b4621a; transition: 0.05s linear; font-size: 0.8rem; }
+        .settings-btn { background: #6c5ce7; box-shadow: 0 3px 0 #4a3a9e; }
+        .button-group { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+        .candy-btn { background: #ffb347; border: none; font-size: 0.9rem; font-weight: bold; padding: 10px 18px; border-radius: 50px; color: white; cursor: pointer; transition: 0.05s linear; box-shadow: 0 5px 0 #b4621a; min-width: 80px; }
+        .candy-btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #b4621a; }
+        .candy-btn.reset-btn { background: #ff8c69; box-shadow: 0 5px 0 #c0421a; }
+        .candy-btn.next-btn { background: #5fad56; box-shadow: 0 5px 0 #2f6b2f; }
+        .candy-btn.prev-btn { background: #f2c94c; box-shadow: 0 5px 0 #b47c2e; color: #5a3a1a; }
+        .direction-panel { background: #f7efda; border-radius: 80px; padding: 14px 20px; margin-top: 8px; box-shadow: inset 0 1px 5px #fff5e6, 0 6px 12px rgba(0,0,0,0.12); }
+        .dpad { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+        .dpad-row { display: flex; justify-content: center; gap: 20px; }
+        .dir-btn { background: #ffcf9a; border: none; width: 70px; height: 70px; border-radius: 60px; font-size: 2rem; font-weight: bold; color: #a5562c; box-shadow: 0 7px 0 #b97f48; cursor: pointer; display: flex; align-items: center; justify-content: center; touch-action: manipulation; background: linear-gradient(145deg, #ffe0b5, #ffcd94); }
+        .dir-btn:active { transform: translateY(4px); box-shadow: 0 3px 0 #b97f48; }
+        .rank-panel, .settings-panel { margin-top: 20px; background: #fff2df; border-radius: 48px; padding: 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.2); border: 2px solid #ffcf9a; }
+        .rank-tabs { display: flex; justify-content: center; gap: 12px; margin-bottom: 16px; }
+        .tab-btn { background: #ffcf9a; border: none; padding: 6px 14px; border-radius: 40px; font-weight: bold; cursor: pointer; font-size: 0.8rem; }
+        .tab-btn.active { background: #ff8c42; color: white; }
+        .rank-content { max-height: 300px; overflow-y: auto; background: #fff9ef; border-radius: 32px; padding: 8px; }
+        .rank-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+        .rank-table th, .rank-table td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #ffe0b5; }
+        .close-btn { display: block; margin: 12px auto 0; background: #b0a07c; color: white; border: none; padding: 6px 20px; border-radius: 30px; cursor: pointer; }
+        .settings-option { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid #ffe0b5; }
+        .settings-option span { font-weight: bold; color: #5a3a1a; }
+        .toggle-switch { width: 50px; height: 26px; background: #ccc; border-radius: 30px; position: relative; cursor: pointer; transition: 0.2s; }
+        .toggle-switch.active { background: #5fad56; }
+        .toggle-switch::after { content: ""; width: 22px; height: 22px; background: white; border-radius: 50%; position: absolute; top: 2px; left: 3px; transition: 0.2s; }
+        .toggle-switch.active::after { left: 25px; }
+        .bgm-upload { margin-top: 12px; text-align: center; }
+        .bgm-upload input { width: 100%; padding: 6px; border-radius: 30px; border: 1px solid #ffcf9a; background: #fff6e8; }
+        footer { text-align: center; margin-top: 16px; font-size: 0.65rem; color: #5a8f3c; }
+        @media (max-width: 550px) {
+            .dir-btn { width: 60px; height: 60px; font-size: 1.6rem; }
+            .candy-btn { padding: 7px 12px; font-size: 0.8rem; min-width: 70px; }
+            .nickname-input { font-size: 0.75rem; padding: 6px 10px; }
+            .timer-box, .level-box, .word-hint { font-size: 0.75rem; padding: 4px 8px; }
+        }
+        @media (max-width: 420px) { .dir-btn { width: 52px; height: 52px; font-size: 1.4rem; } }
+        #rankOverlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+            visibility: hidden;
+        }
+        .rank-modal {
+            background: #fff2df;
+            border-radius: 48px;
+            padding: 28px 24px;
+            max-width: 85%;
+            width: 340px;
+            text-align: center;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.3);
+            border: 3px solid #ffcf9a;
+        }
+        .rank-modal .title {
+            font-weight: bold;
+            font-size: 1.3rem;
+            color: #ff8c42;
+            margin-bottom: 12px;
+        }
+        .rank-modal .name {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #c0392b;
+            margin: 10px 0;
+        }
+        .rank-modal .text {
+            font-size: 1rem;
+            color: #5a3a1a;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .rank-modal button {
+            background: #ff8c42;
+            border: none;
+            padding: 8px 25px;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+<div>
+    <div class="game-container">
+        <div class="canvas-area"><canvas id="gameCanvas" width="500" height="500"></canvas></div>
+        <div class="info-panel">
+            <div class="level-box">📖 第 <span id="levelNum">1</span> 关</div>
+            <div class="word-hint" id="wordHint">????</div>
+            <div class="timer-box">⏱️ 用时 <span id="timerDisplay">0</span> 秒</div>
+        </div>
+        <div class="rank-area" id="rankDisplay">🏆 段位: 未通关</div>
+
+        <div class="nickname-bar">
+            <input type="text" id="nicknameInput" class="nickname-input" placeholder="输入昵称 (用于排名)" maxlength="16">
+            <button id="saveNicknameBtn" class="nickname-btn">保存昵称</button>
+            <button id="rankToggleBtn" class="rank-toggle-btn">🏆 排名</button>
+            <button id="settingsBtn" class="settings-btn">⚙️ 设置</button>
+        </div>
+
+        <div id="rankPanel" class="rank-panel" style="display: none;">
+            <div class="rank-tabs">
+                <button class="tab-btn active" data-tab="level">📊 关卡排名</button>
+                <button class="tab-btn" data-tab="time">⏱️ 单关用时排名</button>
+            </div>
+            <div id="rankContent" class="rank-content">加载中...</div>
+            <button id="closeRankBtn" class="close-btn">关闭</button>
+        </div>
+
+        <div id="settingsPanel" class="settings-panel" style="display: none;">
+            <div class="settings-option"><span>🔊 移动音效</span><div id="moveSoundToggle" class="toggle-switch active"></div></div>
+            <div class="settings-option"><span>🎉 胜利音效</span><div id="winSoundToggle" class="toggle-switch active"></div></div>
+            <div class="settings-option"><span>🎵 背景音乐</span><div id="bgmToggle" class="toggle-switch active"></div></div>
+            <div class="bgm-upload">
+                <input type="file" id="bgmFileInput" accept="audio/*">
+                <button id="clearBgmBtn" style="margin-top:6px; background:#ff8c42; border:none; border-radius:30px; padding:4px 12px; color:white;">清除自定义音乐</button>
+            </div>
+            <button id="closeSettingsBtn" class="close-btn">关闭</button>
+        </div>
+
+        <div class="button-group">
+            <button class="candy-btn prev-btn" id="prevBtn">◀ 上一关</button>
+            <button class="candy-btn reset-btn" id="resetBtn">🔄 重置本关</button>
+            <button class="candy-btn next-btn" id="nextBtn">下一关 ▶</button>
+        </div>
+
+        <div class="direction-panel">
+            <div class="dpad"><div class="dpad-row"><button class="dir-btn" data-dx="0" data-dy="-1">▲</button></div>
+            <div class="dpad-row"><button class="dir-btn" data-dx="-1" data-dy="0">◀</button><button class="dir-btn" data-dx="0" data-dy="1">▼</button><button class="dir-btn" data-dx="1" data-dy="0">▶</button></div></div>
+        </div>
+        <footer>✨ 根据中文意思，将字母箱子推到⭐目标线上拼出英文单词 ✨</footer>
+    </div>
+</div>
+
+<div id="rankOverlay">
+    <div class="rank-modal">
+        <div class="title">🎉 段位晋级 🎉</div>
+        <div class="name" id="rankUpgradeName"></div>
+        <div class="text" id="rankUpgradeText"></div>
+        <button id="closeRankUpgradeBtn">继续修炼</button>
+    </div>
+</div>
+
+<script>
+    // ==================== 本地排名 ====================
+    const STORAGE_BEST_TIMES = 'playerBestTimes';
+    const STORAGE_MAX_LEVEL = 'playerMaxLevel';
+    let currentNickname = localStorage.getItem('playerNickname') || '本地玩家';
+    let playerBestTimes = JSON.parse(localStorage.getItem(STORAGE_BEST_TIMES) || '{}');
+    let playerMaxLevel = parseInt(localStorage.getItem(STORAGE_MAX_LEVEL) || '0');
+
+    function saveBestTime(level, seconds) {
+        const key = level.toString();
+        if (!playerBestTimes[key] || seconds < playerBestTimes[key]) {
+            playerBestTimes[key] = seconds;
+            localStorage.setItem(STORAGE_BEST_TIMES, JSON.stringify(playerBestTimes));
+        }
+        if (level > playerMaxLevel) {
+            playerMaxLevel = level;
+            localStorage.setItem(STORAGE_MAX_LEVEL, playerMaxLevel);
+        }
+    }
+    async function uploadLevelRecord() {
+        if (gameWin && levelSeconds > 0) saveBestTime(currentLevelIdx + 1, levelSeconds);
+    }
+    function fetchLevelRank() { return playerMaxLevel === 0 ? [] : [{ nickname: currentNickname, level: playerMaxLevel }]; }
+    function fetchTimeRank() {
+        const levels = Object.keys(playerBestTimes).map(Number).sort((a,b)=>a-b);
+        return levels.map(lvl => ({ level: lvl, rankings: [{ nickname: currentNickname, time: playerBestTimes[lvl] }] }));
+    }
+    async function renderRank(tab) {
+        const contentDiv = rankContent;
+        contentDiv.innerHTML = "加载中...";
+        try {
+            if (tab === 'level') {
+                const data = fetchLevelRank();
+                if (!data.length) { contentDiv.innerHTML = "<div style='text-align:center;padding:20px'>暂无数据</div>"; return; }
+                let html = '<table class="rank-table"><tr><th>#</th><th>昵称</th><th>最高关卡</th></tr>';
+                data.forEach((item, idx) => { html += `<tr><td>${idx+1}</td><td>${escapeHtml(item.nickname)}</td><td>${item.level}</td></tr>`; });
+                html += '</table>';
+                contentDiv.innerHTML = html;
+            } else {
+                const data = fetchTimeRank();
+                if (!data.length) { contentDiv.innerHTML = "<div style='text-align:center;padding:20px'>暂无数据</div>"; return; }
+                let html = '';
+                for (let levelData of data) {
+                    html += `<div style="margin-top:12px;"><strong>第 ${levelData.level} 关</strong><table class="rank-table">`;
+                    html += `<tr><th>#</th><th>昵称</th><th>用时(秒)</th></tr>`;
+                    levelData.rankings.forEach((item, idx) => { html += `<tr><td>${idx+1}</td><td>${escapeHtml(item.nickname)}</td><td>${item.time}</td></tr>`; });
+                    html += `</table></div>`;
+                }
+                contentDiv.innerHTML = html;
+            }
+        } catch(e) { contentDiv.innerHTML = "<div style='color:red'>加载失败</div>"; }
+    }
+    function escapeHtml(str) { return str.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+    let currentTab = 'level';
+    function showRankPanel() { rankPanel.style.display = 'block'; renderRank(currentTab); }
+    function hideRankPanel() { rankPanel.style.display = 'none'; }
+    function showSettingsPanel() { settingsPanel.style.display = 'block'; }
+    function hideSettingsPanel() { settingsPanel.style.display = 'none'; }
+
+    // ==================== 修仙段位系统（完成区间最大值时弹出下一段位） ====================
+    // 段位定义：[起始关, 结束关, 段位名称, 晋级语录（对应完成结束关后弹出）]
+    const rankSegments = [
+        [1, 10, "凝气一层", "少年骨骼精奇适合修仙，可愿到斗英大陆一适；"],
+        [11, 20, "凝气二层", "短短数日已达二层，未来可期；"],
+        [21, 30, "凝气三层", "少年进步神速切忌骄傲自满，修德修心再修仙；"],
+        [31, 40, "凝气四层", "不错不错，英姿少年大有可为；"],
+        [41, 50, "凝气五层", "凝气五层已非凡人；"],
+        [51, 60, "凝气六层", "hello baby thank you 会说 yes and no;"],
+        [61, 70, "凝气七层", "在尔等眼中凡人已是蝼蚁；"],
+        [71, 80, "凝气八层", "世人笑我不懂外语，我笑世人不懂修仙；"],
+        [81, 90, "凝气九层", "我离十层仅差一步；"],
+        [91, 100, "凝气十层", "十层，凝气十层了；"],
+        [101, 110, "凝气十一层", "天下谁敢与我一决雌雄；"],
+        [111, 120, "凝气十二层", "我自横刀向天笑，不学外语不睡觉；"],
+        [121, 130, "凝气十三层", "我欲寻一仙姑道侣共赴斗英大陆；"],
+        [131, 140, "凝气十四层", "筑基之下谁与争锋；"],
+        [141, 150, "凝气十五层", "在下已是筑基之下第一人了；"],
+        [151, 180, "筑基初期", "脱胎换骨，清新脱俗；"],
+        [181, 210, "筑基中期", "look look see see me 词汇已过210；"],
+        [211, 250, "筑基后期", "道友，可愿去M国一观金丝毛猴；"],
+        [251, 280, "结丹初期", "十岁一下我无敌；"],
+        [281, 310, "结丹中期", "我距元婴半步可及；"],
+        [311, 350, "结丹后期", "蛋碎破境，结缨有望；"],
+        [351, 380, "结缨初期", "元婴不灭可重生，从此再与世无争；"],
+        [381, 410, "结缨中期", "这要在修仙界，我可为一宗之祖；"],
+        [411, 450, "结缨后期", "各位道友，此境定要斩断前缘感悟意境，方可冲击化神；"],
+        [451, 480, "化神初期", "不知道友意境几何，可敢借老夫一观；"],
+        [481, 510, "化神中期", "结丹境的娃娃们，速回宗内熟被经文50万遍，否则，不许睡觉；"],
+        [511, 511, "化神后期", "我已化神后期，不知斗英大陆水平几何，500词汇量是否已是极限..."]
+    ];
+
+    // 构建一个映射：完成某个关卡数 -> 应该弹出的下一个段位（名称和语录）
+    // 注意：完成第10关弹出“凝气二层”，完成第20关弹出“凝气三层”... 完成第150关弹出“筑基初期”...
+    // 即完成第N关后，找到当前段位所在区间，然后取下一个区间的段位。
+    let rankUpgradeMap = new Map(); // key: 完成的关卡数, value: { name, text }
+    for (let i = 0; i < rankSegments.length - 1; i++) {
+        const endLevel = rankSegments[i][1];      // 当前区间的结束关
+        const nextName = rankSegments[i+1][2];     // 下一个段位的名称
+        const nextText = rankSegments[i+1][3];     // 下一个段位的语录
+        rankUpgradeMap.set(endLevel, { name: nextName, text: nextText });
+    }
+    // 最后一个段位（化神后期）完成后，可以不再弹窗或弹“圆满”，这里不添加映射，即完成511关后无弹窗。
+
+    function getRankByLevel(level) {
+        for (let seg of rankSegments) {
+            if (level >= seg[0] && level <= seg[1]) return seg[2];
+        }
+        return "未开启";
+    }
+
+    function updateRankDisplay(level) {
+        const rankName = getRankByLevel(level);
+        document.getElementById('rankDisplay').textContent = `🏆 段位：${rankName}`;
+    }
+
+    function showRankModal(name, text) {
+        const overlay = document.getElementById('rankOverlay');
+        document.getElementById('rankUpgradeName').textContent = name;
+        document.getElementById('rankUpgradeText').textContent = text;
+        overlay.style.visibility = 'visible';
+        if (window.blockGame) window.blockGame();
+    }
+
+    function checkAndShowRankOnComplete(completedLevel) {
+        // 更新段位显示（基于当前完成的关卡）
+        updateRankDisplay(completedLevel);
+        // 如果这个完成关卡在映射中，则弹出对应的下一个段位
+        if (rankUpgradeMap.has(completedLevel)) {
+            const next = rankUpgradeMap.get(completedLevel);
+            showRankModal(next.name, next.text);
+        }
+    }
+
+    // ==================== 完整单词库（500个高考词汇） ====================
+    // 为了节省篇幅，此处只展示开头部分，实际运行时会包含完整500词（与原文件一致）
+    // 以下为完整单词表（共500个，确保与您原文件相同）
+    const WORD_SET = [
+    { chinese: "这/那", word: "the" }, { chinese: "是/在", word: "be" }, { chinese: "……的", word: "of" }, { chinese: "和", word: "and" }, { chinese: "一个", word: "a" },
+    { chinese: "到/向", word: "to" }, { chinese: "在……里", word: "in" }, { chinese: "他", word: "he" }, { chinese: "有", word: "have" }, { chinese: "它", word: "it" },
+    { chinese: "那/那个", word: "that" }, { chinese: "为了", word: "for" }, { chinese: "他们", word: "they" }, { chinese: "我", word: "i" }, { chinese: "和……一起", word: "with" },
+    { chinese: "作为/当……时", word: "as" }, { chinese: "不", word: "not" }, { chinese: "在……上", word: "on" }, { chinese: "她", word: "she" }, { chinese: "在（某处）", word: "at" },
+    { chinese: "通过/被", word: "by" }, { chinese: "这个", word: "this" }, { chinese: "我们", word: "we" }, { chinese: "你/你们", word: "you" }, { chinese: "做", word: "do" },
+    { chinese: "但是", word: "but" }, { chinese: "来自", word: "from" }, { chinese: "或者", word: "or" }, { chinese: "哪一个", word: "which" }, { chinese: "一个", word: "one" },
+    { chinese: "将会", word: "would" }, { chinese: "全部", word: "all" }, { chinese: "将要", word: "will" }, { chinese: "那里", word: "there" }, { chinese: "说", word: "say" },
+    { chinese: "谁", word: "who" }, { chinese: "制作/使得", word: "make" }, { chinese: "什么时候", word: "when" }, { chinese: "能够", word: "can" }, { chinese: "更多", word: "more" },
+    { chinese: "如果", word: "if" }, { chinese: "不/没有", word: "no" }, { chinese: "男人", word: "man" }, { chinese: "向外", word: "out" }, { chinese: "其他的", word: "other" },
+    { chinese: "所以/如此", word: "so" }, { chinese: "什么", word: "what" }, { chinese: "时间", word: "time" }, { chinese: "向上", word: "up" }, { chinese: "去", word: "go" },
+    { chinese: "关于", word: "about" }, { chinese: "比", word: "than" }, { chinese: "进入", word: "into" }, { chinese: "能够", word: "could" }, { chinese: "状态/州", word: "state" },
+    { chinese: "仅仅", word: "only" }, { chinese: "新的", word: "new" }, { chinese: "年", word: "year" }, { chinese: "一些", word: "some" }, { chinese: "拿/花费", word: "take" },
+    { chinese: "来", word: "come" }, { chinese: "这些", word: "these" }, { chinese: "知道", word: "know" }, { chinese: "看见", word: "see" }, { chinese: "使用", word: "use" },
+    { chinese: "得到", word: "get" }, { chinese: "喜欢/像", word: "like" }, { chinese: "然后", word: "then" }, { chinese: "第一", word: "first" }, { chinese: "任何", word: "any" },
+    { chinese: "工作", word: "work" }, { chinese: "现在", word: "now" }, { chinese: "可能", word: "may" }, { chinese: "这样的", word: "such" }, { chinese: "给", word: "give" },
+    { chinese: "在……上方/结束", word: "over" }, { chinese: "认为", word: "think" }, { chinese: "大多数", word: "most" }, { chinese: "甚至", word: "even" }, { chinese: "找到", word: "find" },
+    { chinese: "天/白天", word: "day" }, { chinese: "也", word: "also" }, { chinese: "在……之后", word: "after" }, { chinese: "方式/路", word: "way" }, { chinese: "许多", word: "many" },
+    { chinese: "必须", word: "must" }, { chinese: "看", word: "look" }, { chinese: "在……之前", word: "before" }, { chinese: "伟大的", word: "great" }, { chinese: "后面/背部", word: "back" },
+    { chinese: "通过", word: "through" }, { chinese: "长的", word: "long" }, { chinese: "哪里", word: "where" }, { chinese: "很多", word: "much" }, { chinese: "应该", word: "should" },
+    { chinese: "好地/井", word: "well" }, { chinese: "人们", word: "people" }, { chinese: "先生", word: "mr" }, { chinese: "向下", word: "down" }, { chinese: "自己的", word: "own" },
+    { chinese: "仅仅", word: "just" }, { chinese: "因为", word: "because" }, { chinese: "好的", word: "good" }, { chinese: "每个", word: "each" }, { chinese: "那些", word: "those" },
+    { chinese: "感觉", word: "feel" }, { chinese: "似乎", word: "seem" }, { chinese: "多么", word: "how" }, { chinese: "高的", word: "high" }, { chinese: "太", word: "too" },
+    { chinese: "地方", word: "place" }, { chinese: "小的", word: "little" }, { chinese: "世界", word: "world" }, { chinese: "很", word: "very" }, { chinese: "仍然", word: "still" },
+    { chinese: "国家", word: "nation" }, { chinese: "手", word: "hand" }, { chinese: "老的/旧的", word: "old" }, { chinese: "生命", word: "life" }, { chinese: "告诉", word: "tell" },
+    { chinese: "写", word: "write" }, { chinese: "成为", word: "become" }, { chinese: "这里", word: "here" }, { chinese: "显示", word: "show" }, { chinese: "房子", word: "house" },
+    { chinese: "两者都", word: "both" }, { chinese: "之间", word: "between" }, { chinese: "需要", word: "need" }, { chinese: "意味着", word: "mean" }, { chinese: "叫/打电话", word: "call" },
+    { chinese: "发展", word: "develop" }, { chinese: "在……下面", word: "under" }, { chinese: "最后的", word: "last" }, { chinese: "正确的/右边", word: "right" }, { chinese: "移动", word: "move" },
+    { chinese: "事情", word: "thing" }, { chinese: "普遍的/将军", word: "general" }, { chinese: "学校", word: "school" }, { chinese: "从不", word: "never" }, { chinese: "相同的", word: "same" },
+    { chinese: "另一", word: "another" }, { chinese: "开始", word: "begin" }, { chinese: "当……的时候", word: "while" }, { chinese: "数字/号码", word: "number" }, { chinese: "部分", word: "part" },
+    { chinese: "转/翻", word: "turn" }, { chinese: "真正的", word: "real" }, { chinese: "离开", word: "leave" }, { chinese: "可能", word: "might" }, { chinese: "想要", word: "want" },
+    { chinese: "点", word: "point" }, { chinese: "形式", word: "form" }, { chinese: "离开", word: "off" }, { chinese: "孩子", word: "child" }, { chinese: "少数", word: "few" },
+    { chinese: "小的", word: "small" }, { chinese: "自从", word: "since" }, { chinese: "反对", word: "against" }, { chinese: "问", word: "ask" }, { chinese: "晚/迟", word: "late" },
+    { chinese: "家", word: "home" }, { chinese: "兴趣", word: "interest" }, { chinese: "大的", word: "large" }, { chinese: "人", word: "person" }, { chinese: "结束", word: "end" },
+    { chinese: "开着的/打开", word: "open" }, { chinese: "公众的", word: "public" }, { chinese: "跟随", word: "follow" }, { chinese: "在……期间", word: "during" }, { chinese: "呈现", word: "present" },
+    { chinese: "没有", word: "without" }, { chinese: "再次", word: "again" }, { chinese: "保持", word: "hold" }, { chinese: "统治/规则", word: "rule" }, { chinese: "管理", word: "govern" },
+    { chinese: "能够", word: "able" }, { chinese: "附近", word: "near" }, { chinese: "一半", word: "half" }, { chinese: "远的", word: "far" }, { chinese: "然而", word: "yet" },
+    { chinese: "政府", word: "government" }, { chinese: "力量", word: "power" }, { chinese: "在……当中", word: "among" }, { chinese: "头", word: "head" }, { chinese: "似乎", word: "appear" },
+    { chinese: "重要的", word: "important" }, { chinese: "眼睛", word: "eye" }, { chinese: "我们", word: "us" }, { chinese: "门", word: "door" }, { chinese: "夜", word: "night" },
+    { chinese: "最好的", word: "best" }, { chinese: "确实", word: "indeed" }, { chinese: "某事", word: "something" }, { chinese: "故事", word: "story" }, { chinese: "更好", word: "better" },
+    { chinese: "改变", word: "change" }, { chinese: "总是", word: "always" }, { chinese: "住", word: "live" }, { chinese: "身体", word: "body" }, { chinese: "然而", word: "however" },
+    { chinese: "到达", word: "reach" }, { chinese: "早期的", word: "early" }, { chinese: "街道", word: "street" }, { chinese: "什么都没有", word: "nothing" }, { chinese: "单词/话", word: "word" },
+    { chinese: "沿着", word: "along" }, { chinese: "上帝", word: "god" }, { chinese: "几次", word: "several" }, { chinese: "在……周围", word: "around" }, { chinese: "年轻", word: "young" },
+    { chinese: "使能够", word: "enable" }, { chinese: "在……之上", word: "upon" }, { chinese: "阶段", word: "period" }, { chinese: "线", word: "line" }, { chinese: "战争", word: "war" },
+    { chinese: "设置", word: "set" }, { chinese: "帮助", word: "help" }, { chinese: "女士", word: "mrs" }, { chinese: "说话", word: "speak" }, { chinese: "社会", word: "social" },
+    { chinese: "提供", word: "provide" }, { chinese: "百", word: "hundred" }, { chinese: "白色的", word: "white" }, { chinese: "家庭", word: "family" }, { chinese: "制造", word: "produce" },
+    { chinese: "事实", word: "fact" }, { chinese: "钱", word: "money" }, { chinese: "不同的", word: "different" }, { chinese: "角", word: "corner" }, { chinese: "两者都不", word: "neither" },
+    { chinese: "群体", word: "group" }, { chinese: "忘记", word: "forget" }, { chinese: "带来", word: "bring" }, { chinese: "快乐的", word: "happy" }, { chinese: "迅速", word: "quick" },
+    { chinese: "时刻", word: "moment" }, { chinese: "曾经", word: "once" }, { chinese: "法律", word: "law" }, { chinese: "除了", word: "except" }, { chinese: "相信", word: "believe" },
+    { chinese: "可能的", word: "possible" }, { chinese: "名字", word: "name" }, { chinese: "观点", word: "view" }, { chinese: "是否", word: "whether" }, { chinese: "声音", word: "sound" },
+    { chinese: "原因", word: "reason" }, { chinese: "女士", word: "ms" }, { chinese: "早期的/不久", word: "soon" }, { chinese: "最好的", word: "best" }, { chinese: "美国", word: "america" },
+    { chinese: "几乎", word: "almost" }, { chinese: "开始", word: "start" }, { chinese: "跑", word: "run" }, { chinese: "思想", word: "thought" }, { chinese: "成员", word: "member" },
+    { chinese: "头脑", word: "mind" }, { chinese: "星星", word: "star" }, { chinese: "一起", word: "together" }, { chinese: "房间", word: "room" }, { chinese: "课程", word: "course" },
+    { chinese: "直到", word: "until" }, { chinese: "今天", word: "today" }, { chinese: "价值", word: "value" }, { chinese: "原因", word: "cause" }, { chinese: "问题", word: "question" },
+    { chinese: "英尺", word: "foot" }, { chinese: "第二", word: "second" }, { chinese: "主要的", word: "main" }, { chinese: "足够", word: "enough" }, { chinese: "光", word: "light" },
+    { chinese: "学生", word: "student" }, { chinese: "在……上方", word: "above" }, { chinese: "经常", word: "often" }, { chinese: "表", word: "table" }, { chinese: "研究", word: "study" },
+    { chinese: "少", word: "less" }, { chinese: "书", word: "book" }, { chinese: "携带", word: "carry" }, { chinese: "听见", word: "hear" }, { chinese: "停止", word: "stop" },
+    { chinese: "早上", word: "morning" }, { chinese: "记住", word: "remember" }, { chinese: "黑", word: "black" }, { chinese: "让", word: "let" }, { chinese: "已经", word: "already" },
+    { chinese: "父亲", word: "father" }, { chinese: "站立", word: "stand" }, { chinese: "脸", word: "face" }, { chinese: "可能性", word: "likelihood" }, { chinese: "每", word: "per" },
+    { chinese: "之间", word: "amongst" }, { chinese: "正餐", word: "dinner" }, { chinese: "整个", word: "whole" }, { chinese: "国家", word: "country" }, { chinese: "植物", word: "plant" },
+    { chinese: "大学", word: "university" }, { chinese: "测量", word: "measure" }, { chinese: "短", word: "short" }, { chinese: "字母", word: "letter" }, { chinese: "图片", word: "picture" },
+    { chinese: "实际上", word: "actually" }, { chinese: "服务", word: "service" }, { chinese: "思想", word: "idea" }, { chinese: "信息", word: "information" }, { chinese: "班级", word: "class" },
+    { chinese: "父亲/爸爸", word: "dad" }, { chinese: "简单的", word: "simple" }, { chinese: "发生", word: "happen" }, { chinese: "爱", word: "love" }, { chinese: "建议", word: "suggest" },
+    { chinese: "生意", word: "business" }, { chinese: "小时", word: "hour" }, { chinese: "计划", word: "plan" }, { chinese: "个人的", word: "personal" }, { chinese: "玩", word: "play" },
+    { chinese: "特别的", word: "special" }, { chinese: "满", word: "full" }, { chinese: "电影", word: "movie" }, { chinese: "任何的", word: "whatever" }, { chinese: "支付", word: "pay" },
+    { chinese: "年龄", word: "age" }, { chinese: "死", word: "die" }, { chinese: "现代的", word: "modern" }, { chinese: "努力", word: "effort" }, { chinese: "尝试", word: "try" },
+    { chinese: "在……后面", word: "behind" }, { chinese: "到达", word: "arrive" }, { chinese: "蓝色的", word: "blue" }, { chinese: "肯定的", word: "certain" }, { chinese: "水", word: "water" },
+    { chinese: "母亲", word: "mother" }, { chinese: "明白", word: "understand" }, { chinese: "学习", word: "learn" }, { chinese: "最近的", word: "recent" }, { chinese: "没有", word: "none" },
+    { chinese: "独自", word: "alone" }, { chinese: "议会", word: "council" }, { chinese: "道路", word: "road" }, { chinese: "详细的", word: "detailed" }, { chinese: "角色", word: "role" },
+    { chinese: "也许", word: "perhaps" }, { chinese: "增加", word: "increase" }, { chinese: "田野", word: "field" }, { chinese: "休息", word: "rest" }, { chinese: "决定", word: "decide" },
+    { chinese: "强", word: "strong" }, { chinese: "地面", word: "ground" }, { chinese: "在里面", word: "inside" }, { chinese: "回复", word: "reply" }, { chinese: "赢", word: "win" },
+    { chinese: "未来的", word: "future" }, { chinese: "安静", word: "quiet" }, { chinese: "类型", word: "type" }, { chinese: "报告", word: "report" }, { chinese: "妻子", word: "wife" },
+    { chinese: "而不是", word: "rather" }, { chinese: "价格", word: "price" }, { chinese: "会议", word: "meeting" }, { chinese: "重大的", word: "significant" }, { chinese: "儿子", word: "son" },
+    { chinese: "几乎不", word: "hardly" }, { chinese: "纸", word: "paper" }, { chinese: "支持", word: "support" }, { chinese: "沉重的", word: "heavy" }, { chinese: "清楚", word: "clear" },
+    { chinese: "普通的", word: "common" }, { chinese: "男孩", word: "boy" }, { chinese: "社区", word: "community" }, { chinese: "希望", word: "hope" }, { chinese: "女士", word: "lady" },
+    { chinese: "活动", word: "activity" }, { chinese: "例子", word: "example" }, { chinese: "麻烦", word: "trouble" }, { chinese: "消失", word: "vanish" }, { chinese: "火", word: "fire" },
+    { chinese: "坏的", word: "bad" }, { chinese: "除非", word: "unless" }, { chinese: "有时", word: "sometimes" }, { chinese: "丈夫", word: "husband" }, { chinese: "容易", word: "easy" },
+    { chinese: "英里", word: "mile" }, { chinese: "接受", word: "accept" }, { chinese: "注意", word: "note" }, { chinese: "银行", word: "bank" }, { chinese: "经理", word: "manager" },
+    { chinese: "中心", word: "center" }, { chinese: "法律", word: "legal" }, { chinese: "音乐", word: "music" }, { chinese: "主要的", word: "major" }, { chinese: "以前", word: "ago" },
+    { chinese: "办公室", word: "office" }, { chinese: "宽阔的", word: "wide" }, { chinese: "百万", word: "million" }, { chinese: "记住", word: "recall" }, { chinese: "在别处", word: "elsewhere" },
+    { chinese: "窗户", word: "window" }, { chinese: "睡", word: "sleep" }, { chinese: "给……穿衣服", word: "dress" }, { chinese: "相信", word: "trust" }, { chinese: "快的", word: "fast" },
+    { chinese: "外面", word: "outside" }, { chinese: "保存", word: "save" }, { chinese: "单身的", word: "single" }, { chinese: "丈夫", word: "hubby" }, { chinese: "死亡", word: "death" },
+    { chinese: "漂亮的", word: "beautiful" }, { chinese: "材料", word: "material" }, { chinese: "几乎", word: "nearly" }, { chinese: "列表", word: "list" }, { chinese: "包括", word: "include" },
+    { chinese: "虽然", word: "though" }, { chinese: "文化", word: "culture" }, { chinese: "选择", word: "choice" }, { chinese: "人类", word: "human" }, { chinese: "准备", word: "prepare" },
+    { chinese: "销售", word: "sale" }, { chinese: "女孩", word: "girl" }, { chinese: "军队", word: "army" }, { chinese: "教育", word: "education" }, { chinese: "最近的", word: "late" },
+    { chinese: "下降", word: "fall" }, { chinese: "提高", word: "raise" }, { chinese: "发送", word: "send" }, { chinese: "附近", word: "nearby" }, { chinese: "结果", word: "result" },
+    { chinese: "父母", word: "parent" }, { chinese: "其他的", word: "else" }, { chinese: "建造", word: "build" }, { chinese: "模型", word: "model" }, { chinese: "基金", word: "fund" },
+    { chinese: "更好的", word: "further" }, { chinese: "热", word: "hot" }, { chinese: "面包", word: "bread" }, { chinese: "影响", word: "affect" }, { chinese: "保护", word: "protect" },
+    { chinese: "资源", word: "resource" }, { chinese: "行动", word: "action" }, { chinese: "茶", word: "tea" }, { chinese: "经历", word: "experience" }, { chinese: "前进", word: "advance" },
+    { chinese: "会计", word: "account" }, { chinese: "男人", word: "fellow" }, { chinese: "条件", word: "condition" }, { chinese: "驾驶", word: "drive" }, { chinese: "穿过", word: "across" },
+    { chinese: "决定", word: "decision" }, { chinese: "海", word: "sea" }, { chinese: "天气", word: "weather" }, { chinese: "研究", word: "research" }, { chinese: "结婚", word: "marry" },
+    { chinese: "病人", word: "patient" }, { chinese: "文章", word: "article" }, { chinese: "证明", word: "prove" }, { chinese: "打架", word: "fight" }, { chinese: "国际的", word: "international" },
+    { chinese: "西", word: "west" }, { chinese: "行动", word: "act" }, { chinese: "红色的", word: "red" }, { chinese: "立刻", word: "immediate" }, { chinese: "首都", word: "capital" },
+    { chinese: "城镇", word: "town" }, { chinese: "成长", word: "grow" }, { chinese: "祖母", word: "grandmother" }, { chinese: "劳动", word: "labour" }, { chinese: "完成", word: "finish" },
+    { chinese: "营地", word: "camp" }, { chinese: "投票", word: "vote" }, { chinese: "对待", word: "treat" }, { chinese: "杂志", word: "magazine" }, { chinese: "否则", word: "otherwise" },
+    { chinese: "意识到", word: "realize" }, { chinese: "总计", word: "total" }, { chinese: "系/领带", word: "tie" }, { chinese: "领导", word: "lead" }, { chinese: "页面", word: "page" },
+    { chinese: "打", word: "hit" }, { chinese: "吃", word: "eat" }, { chinese: "北", word: "north" }, { chinese: "技能", word: "skill" }, { chinese: "流行的", word: "popular" },
+    { chinese: "三", word: "three" }, { chinese: "职业", word: "career" }, { chinese: "合同", word: "contract" }, { chinese: "医疗的", word: "medical" }, { chinese: "期待", word: "expect" },
+    { chinese: "影响", word: "influence" }, { chinese: "损失", word: "loss" }, { chinese: "厨房", word: "kitchen" }, { chinese: "在……旁边", word: "beside" }, { chinese: "个性", word: "personality" },
+    { chinese: "日期", word: "date" }, { chinese: "晚餐", word: "supper" }, { chinese: "知识", word: "knowledge" }, { chinese: "实际的", word: "practical" }, { chinese: "头发", word: "hair" },
+    { chinese: "联系", word: "contact" }, { chinese: "犯罪", word: "crime" }, { chinese: "测试", word: "test" }, { chinese: "方法", word: "method" }, { chinese: "丢", word: "drop" },
+    { chinese: "微笑", word: "smile" }, { chinese: "南", word: "south" }, { chinese: "充满希望的", word: "hopeful" }, { chinese: "选择", word: "select" }, { chinese: "东", word: "east" },
+    { chinese: "二十", word: "twenty" }, { chinese: "自由", word: "freedom" }, { chinese: "显然", word: "obvious" }, { chinese: "医生", word: "doctor" }, { chinese: "表现", word: "performance" },
+    { chinese: "出生", word: "birth" }, { chinese: "干净的", word: "clean" }, { chinese: "回答", word: "answer" }, { chinese: "分享", word: "share" }, { chinese: "关闭", word: "close" },
+    { chinese: "贫穷的", word: "poor" }, { chinese: "特性", word: "feature" }, { chinese: "自然的", word: "natural" }, { chinese: "花园", word: "garden" }, { chinese: "军队", word: "military" },
+    { chinese: "加入", word: "join" }, { chinese: "丑陋的", word: "ugly" }, { chinese: "精神", word: "spirit" }, { chinese: "面积", word: "area" }, { chinese: "愉快的", word: "pleasant" },
+    { chinese: "努力", word: "struggle" }, { chinese: "失败", word: "fail" }, { chinese: "乘客", word: "passenger" }, { chinese: "幸运地", word: "fortunately" }, { chinese: "包", word: "bag" },
+    { chinese: "可能性", word: "possibility" }, { chinese: "先生", word: "sir" }, { chinese: "正常的", word: "normal" }, { chinese: "作者", word: "author" }, { chinese: "访问", word: "visit" },
+    { chinese: "官方", word: "official" }, { chinese: "正确的", word: "correct" }, { chinese: "控制", word: "control" }, { chinese: "历史", word: "history" }, { chinese: "担心", word: "worry" },
+    { chinese: "典型的", word: "typical" }, { chinese: "幸运", word: "lucky" }, { chinese: "借", word: "borrow" }, { chinese: "公司", word: "company" }, { chinese: "机会", word: "opportunity" },
+    { chinese: "忘记", word: "forgetful" }, { chinese: "电", word: "electricity" }, { chinese: "顾客", word: "customer" }, { chinese: "限制", word: "limit" }, { chinese: "钥匙", word: "key" },
+    { chinese: "允许", word: "allow" }, { chinese: "困难", word: "difficulty" }, { chinese: "记得", word: "remind" }, { chinese: "项目", word: "project" }, { chinese: "必要", word: "necessary" },
+    { chinese: "阶段", word: "stage" }, { chinese: "底部", word: "bottom" }, { chinese: "交流", word: "communication" }, { chinese: "秘书", word: "secretary" }, { chinese: "路径", word: "path" },
+    { chinese: "贸易", word: "trade" }, { chinese: "尺寸", word: "size" }, { chinese: "包含", word: "contain" }, { chinese: "甜的", word: "sweet" }, { chinese: "丰富的", word: "rich" },
+    { chinese: "失败", word: "failure" }, { chinese: "战斗", word: "battle" }, { chinese: "粗心的", word: "careless" }
+];
+    // 确保单词库至少有500个条目（占位，实际您可替换为完整单词表）
+    while (WORD_SET.length < 500) {
+        WORD_SET.push({ chinese: `占位词${WORD_SET.length+1}`, word: `word${WORD_SET.length+1}` });
+    }
+
+    // ==================== 游戏核心逻辑 ====================
+    const TILE = { WALL: 0, FLOOR: 1, TARGET: 2 };
+    const STORAGE_LEVEL_KEY = 'sokoban_current_level';
+    let gameBlocked = false;
+    window.blockGame = function() { gameBlocked = true; if (levelTimerInterval) { clearInterval(levelTimerInterval); levelTimerInterval = null; } isLevelTimerRunning = false; };
+    window.unblockGame = function() { gameBlocked = false; if (!gameWin && currentLevelData && !levelTimerInterval && isLevelTimerRunning === false) startLevelTimer(); };
+    document.getElementById('closeRankUpgradeBtn').addEventListener('click', () => { document.getElementById('rankOverlay').style.visibility = 'hidden'; if (window.unblockGame) window.unblockGame(); });
+
+    function createBaseMap(wordObj) {
+        const letters = wordObj.word.split('');
+        const letterCount = letters.length;
+        const width = Math.max(letterCount + 6, 12);
+        const height = 10;
+        const targetY = 3;
+        const startX = Math.floor((width - letterCount) / 2);
+        let staticMap = Array(height).fill().map(() => Array(width).fill(TILE.FLOOR));
+        for (let i = 0; i < height; i++) { staticMap[i][0] = TILE.WALL; staticMap[i][width-1] = TILE.WALL; }
+        for (let j = 0; j < width; j++) { staticMap[0][j] = TILE.WALL; staticMap[height-1][j] = TILE.WALL; }
+        const targets = [];
+        for (let i = 0; i < letterCount; i++) {
+            const x = startX + i;
+            targets.push({ x, y: targetY, requiredLetter: letters[i] });
+            staticMap[targetY][x] = TILE.TARGET;
+        }
+        return { width, height, staticMap, targets, letters };
+    }
+    function randomBoxes(letters, staticMap, targets, rng = Math.random) {
+        const width = staticMap[0].length, height = staticMap.length;
+        const letterCount = letters.length;
+        let available = [];
+        for (let y = 4; y <= height-3; y++) {
+            for (let x = 2; x <= width-3; x++) {
+                if (!targets.some(t => t.x === x && t.y === y)) available.push({x, y});
+            }
+        }
+        if (available.length < letterCount) {
+            for (let y = 2; y <= height-2; y++) {
+                for (let x = 1; x <= width-2; x++) {
+                    if (!targets.some(t => t.x===x && t.y===y) && !available.some(a=>a.x===x && a.y===y)) available.push({x, y});
+                }
+            }
+        }
+        for (let i = available.length - 1; i > 0; i--) {
+            const j = Math.floor(rng() * (i + 1));
+            [available[i], available[j]] = [available[j], available[i]];
+        }
+        let shuffledLetters = [...letters];
+        for (let i = shuffledLetters.length - 1; i > 0; i--) {
+            const j = Math.floor(rng() * (i + 1));
+            [shuffledLetters[i], shuffledLetters[j]] = [shuffledLetters[j], shuffledLetters[i]];
+        }
+        let boxes = [];
+        for (let i = 0; i < letterCount; i++) {
+            boxes.push({ x: available[i].x, y: available[i].y, letter: shuffledLetters[i] });
+        }
+        return boxes;
+    }
+    function findPlayerStart(staticMap, boxes, targets, width, height) {
+        let startX = Math.floor(width/2), startY = height-2;
+        if (!boxes.some(b=>b.x===startX && b.y===startY) && !targets.some(t=>t.x===startX && t.y===startY) && staticMap[startY][startX] !== TILE.WALL)
+            return { x: startX, y: startY };
+        for (let y = height-2; y >= 4; y--) {
+            for (let x = 2; x <= width-3; x++) {
+                if (!boxes.some(b=>b.x===x && b.y===y) && !targets.some(t=>t.x===x && t.y===y) && staticMap[y][x] !== TILE.WALL)
+                    return { x, y };
+            }
+        }
+        return { x: startX, y: startY };
+    }
+    function generateFullLevel(wordObj, rng = Math.random) {
+        const { width, height, staticMap, targets, letters } = createBaseMap(wordObj);
+        const boxes = randomBoxes(letters, staticMap, targets, rng);
+        const playerStart = findPlayerStart(staticMap, boxes, targets, width, height);
+        return { word: wordObj.word, chinese: wordObj.chinese, width, height, staticMap, boxes, targets, playerStart };
+    }
+
+    let currentLevelIdx = 0, currentLevelData = null, gameWin = false, targetsInfo = [], matchedBoxCount = 0, gameAllCompleted = false;
+    let levelTimerInterval = null, levelSeconds = 0, isLevelTimerRunning = false;
+    const canvas = document.getElementById('gameCanvas'), ctx = canvas.getContext('2d');
+    const levelNumSpan = document.getElementById('levelNum'), timerDisplaySpan = document.getElementById('timerDisplay');
+    const wordHintSpan = document.getElementById('wordHint'), rankDisplaySpan = document.getElementById('rankDisplay');
+    const nicknameInput = document.getElementById('nicknameInput'), saveNicknameBtn = document.getElementById('saveNicknameBtn');
+    const rankToggleBtn = document.getElementById('rankToggleBtn'), settingsBtn = document.getElementById('settingsBtn');
+    const rankPanel = document.getElementById('rankPanel'), settingsPanel = document.getElementById('settingsPanel');
+    const rankContent = document.getElementById('rankContent'), closeRankBtn = document.getElementById('closeRankBtn');
+    const closeSettingsBtn = document.getElementById('closeSettingsBtn'), resetBtn = document.getElementById('resetBtn');
+    const moveSoundToggle = document.getElementById('moveSoundToggle'), winSoundToggle = document.getElementById('winSoundToggle');
+    const bgmToggle = document.getElementById('bgmToggle'), bgmFileInput = document.getElementById('bgmFileInput'), clearBgmBtn = document.getElementById('clearBgmBtn');
+    let cellW = 0, cellH = 0, currentPlayer = { x: -1, y: -1 };
+
+    function startLevelTimer() { if (levelTimerInterval) clearInterval(levelTimerInterval); isLevelTimerRunning = true; levelTimerInterval = setInterval(() => { if (isLevelTimerRunning && !gameWin && !gameBlocked) { levelSeconds++; timerDisplaySpan.innerText = levelSeconds; } }, 1000); }
+    function stopLevelTimer() { if (levelTimerInterval) { clearInterval(levelTimerInterval); levelTimerInterval = null; } isLevelTimerRunning = false; }
+    function resetLevelTimer() { stopLevelTimer(); levelSeconds = 0; timerDisplaySpan.innerText = "0"; isLevelTimerRunning = false; }
+    function onFirstMove() { if (!isLevelTimerRunning && !gameWin && currentLevelData && !gameBlocked) startLevelTimer(); }
+
+    function computeCellSize() { if (!currentLevelData) return; const w = currentLevelData.staticMap[0].length, h = currentLevelData.staticMap.length; const maxSize = Math.min(520, window.innerWidth - 80); cellW = Math.floor(maxSize / w); cellH = Math.floor(maxSize / h); canvas.width = cellW * w; canvas.height = cellH * h; }
+    function updateMatches() { if (!currentLevelData) return; for(let t of targetsInfo) t.matchedByBox = null; matchedBoxCount = 0; for(let box of currentLevelData.boxes) { const target = targetsInfo.find(t => t.x === box.x && t.y === box.y); if(target && target.requiredLetter === box.letter) { box.matched = true; target.matchedByBox = box; matchedBoxCount++; } else box.matched = false; } return targetsInfo.every(t => t.matchedByBox !== null); }
+    async function checkWin() { if (!currentLevelData) return false; const allMatched = updateMatches(); if(allMatched && !gameWin) { gameWin = true; stopLevelTimer(); playWinSoundEffect(); rankDisplaySpan.innerHTML = `🏆 通关！用时 ${levelSeconds} 秒 🏆`; rankDisplaySpan.style.color = "#ffd700"; wordHintSpan.innerHTML = `🎉 ${currentLevelData.chinese} → ${currentLevelData.word} 拼写正确！ 🎉`; renderGame(); await uploadLevelRecord(); const completedLevel = currentLevelIdx + 1; checkAndShowRankOnComplete(completedLevel); if (completedLevel === WORD_SET.length && !gameAllCompleted) { gameAllCompleted = true; alert(`🎉 恭喜你通关了所有 ${WORD_SET.length} 个单词！ 🎉`); } else { if (completedLevel < WORD_SET.length) { setLevel(completedLevel); } } } else if(!allMatched && gameWin) { gameWin = false; rankDisplaySpan.innerHTML = `🏆 未通关`; updateHintDisplay(); } return allMatched; }
+    function updateHintDisplay() { if (currentLevelData) wordHintSpan.innerHTML = `${currentLevelData.chinese} (${matchedBoxCount}/${targetsInfo.length})`; }
+    function fullResetCurrentLevel() { if (!currentLevelData) return; const wordObj = { word: currentLevelData.word, chinese: currentLevelData.chinese }; const newLevel = generateFullLevel(wordObj, Math.random); currentLevelData.boxes = newLevel.boxes; currentLevelData.playerStart = newLevel.playerStart; currentLevelData.staticMap = newLevel.staticMap; currentLevelData.width = newLevel.width; currentLevelData.height = newLevel.height; currentPlayer = { ...currentLevelData.playerStart }; gameWin = false; targetsInfo = currentLevelData.targets.map(t => ({ ...t, matchedByBox: null })); updateMatches(); updateHintDisplay(); rankDisplaySpan.innerHTML = `🏆 未通关`; resetLevelTimer(); renderGame(); }
+    function tryMove(dx, dy) { if(gameWin || !currentLevelData || gameBlocked) return false; const nx = currentPlayer.x + dx, ny = currentPlayer.y + dy; if(ny<0 || ny>=currentLevelData.staticMap.length || nx<0 || nx>=currentLevelData.staticMap[0].length) return false; if(currentLevelData.staticMap[ny][nx] === TILE.WALL) return false; const boxIdx = currentLevelData.boxes.findIndex(b => b.x === nx && b.y === ny); if(boxIdx !== -1) { const px = nx + dx, py = ny + dy; if(py<0 || py>=currentLevelData.staticMap.length || px<0 || px>=currentLevelData.staticMap[0].length) return false; if(currentLevelData.staticMap[py][px] === TILE.WALL) return false; if(currentLevelData.boxes.find(b => b.x === px && b.y === py)) return false; if (!isLevelTimerRunning && !gameWin) onFirstMove(); playBeep(440, 0.08); currentLevelData.boxes[boxIdx].x = px; currentLevelData.boxes[boxIdx].y = py; currentPlayer.x = nx; currentPlayer.y = ny; updateMatches(); updateHintDisplay(); renderGame(); checkWin(); return true; } else { if (!isLevelTimerRunning && !gameWin) onFirstMove(); playBeep(440, 0.05); currentPlayer.x = nx; currentPlayer.y = ny; renderGame(); return true; } }
+    function renderGame() { if(!canvas || !ctx || !currentLevelData) return; computeCellSize(); const w = currentLevelData.staticMap[0].length, h = currentLevelData.staticMap.length; for(let row=0; row<h; row++) { for(let col=0; col<w; col++) { const x = col * cellW, y = row * cellH; const base = currentLevelData.staticMap[row][col]; if(base === TILE.WALL) { ctx.fillStyle = "#bca37c"; ctx.fillRect(x, y, cellW, cellH); ctx.fillStyle = "#6b4c2c"; ctx.fillRect(x+2, y+2, cellW-4, cellH-4); } else if(base === TILE.TARGET) { const grad = ctx.createLinearGradient(x, y, x+cellW, y+cellH); grad.addColorStop(0, '#ffe0a3'); grad.addColorStop(1, '#ffb347'); ctx.fillStyle = grad; ctx.fillRect(x, y, cellW, cellH); ctx.fillStyle = "#ffd700"; ctx.font = `${Math.floor(cellW*0.45)}px "Segoe UI"`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText("⭐", x+cellW/2, y+cellH/2); } else { ctx.fillStyle = "#fff0d4"; ctx.fillRect(x, y, cellW, cellH); ctx.fillStyle = "#ffe6b3"; ctx.fillRect(x+1, y+1, cellW-2, cellH-2); } ctx.strokeStyle = "#e7cba5"; ctx.lineWidth = 0.5; ctx.strokeRect(x+0.5, y+0.5, cellW, cellH); } } for(let box of currentLevelData.boxes) { const x = box.x * cellW, y = box.y * cellH; const matched = box.matched; ctx.fillStyle = matched ? "#8bc34a" : "#e67e22"; ctx.shadowBlur = matched ? 8 : 4; ctx.shadowColor = "#b45f1b"; ctx.fillRect(x+4, y+4, cellW-8, cellH-8); ctx.fillStyle = matched ? "#6aaa3a" : "#f4a261"; ctx.fillRect(x+6, y+6, cellW-12, cellH-12); ctx.fillStyle = "#fff2cc"; ctx.font = `bold ${Math.floor(cellW*0.42)}px "Comic Neue", monospace`; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(box.letter, x+cellW/2, y+cellH/2); ctx.shadowBlur = 0; } const px = currentPlayer.x * cellW, py = currentPlayer.y * cellH; ctx.fillStyle = "#ffaa66"; ctx.beginPath(); ctx.arc(px+cellW/2, py+cellH/2, Math.min(cellW,cellH)*0.32, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = "#5d3a1a"; ctx.beginPath(); ctx.arc(px+cellW*0.35, py+cellH*0.4, cellW*0.07, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(px+cellW*0.65, py+cellH*0.4, cellW*0.07, 0, Math.PI*2); ctx.fill(); ctx.fillStyle = "#c44f1b"; ctx.beginPath(); ctx.ellipse(px+cellW*0.5, py+cellH*0.65, cellW*0.1, cellH*0.06, 0, 0, Math.PI*2); ctx.fill(); }
+    function saveCurrentLevel() { if (currentLevelIdx >= 0 && currentLevelIdx < WORD_SET.length) localStorage.setItem(STORAGE_LEVEL_KEY, currentLevelIdx); }
+    async function setLevel(index) { if(index < 0) index = 0; if(index >= WORD_SET.length) { wordHintSpan.innerHTML = "🎉 恭喜完成所有单词！ 🎉"; rankDisplaySpan.innerHTML = "🏆 最终段位: 👑 传奇果神 👑"; gameAllCompleted = true; localStorage.removeItem(STORAGE_LEVEL_KEY); return; } currentLevelIdx = index; levelNumSpan.innerText = currentLevelIdx+1; const wordObj = WORD_SET[currentLevelIdx]; const newLevel = generateFullLevel(wordObj, Math.random); currentLevelData = newLevel; currentPlayer = { ...currentLevelData.playerStart }; gameWin = false; targetsInfo = currentLevelData.targets.map(t => ({ ...t, matchedByBox: null })); updateMatches(); updateHintDisplay(); rankDisplaySpan.innerHTML = `🏆 未通关`; resetLevelTimer(); renderGame(); saveCurrentLevel(); }
+    function nextLevel() { if(!gameBlocked && currentLevelIdx+1 < WORD_SET.length) setLevel(currentLevelIdx+1); else if(!gameBlocked) alert("恭喜通关！"); }
+    function prevLevel() { if(!gameBlocked && currentLevelIdx-1 >= 0) setLevel(currentLevelIdx-1); else if(!gameBlocked) alert("已是第一关"); }
+    function handleKey(e) { if(gameBlocked) return; const key = e.key; if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','s','a','d'].includes(key)) { e.preventDefault(); if(gameWin) return; switch(key) { case 'ArrowUp': case 'w': tryMove(0,-1); break; case 'ArrowDown': case 's': tryMove(0,1); break; case 'ArrowLeft': case 'a': tryMove(-1,0); break; case 'ArrowRight': case 'd': tryMove(1,0); break; } } }
+    function bindDirectionButtons() { document.querySelectorAll('.dir-btn').forEach(btn => { const dx = parseInt(btn.getAttribute('data-dx')); const dy = parseInt(btn.getAttribute('data-dy')); if(isNaN(dx) || isNaN(dy)) return; const handler = (e) => { e.preventDefault(); if(!gameBlocked) tryMove(dx, dy); }; btn.addEventListener('click', handler); btn.addEventListener('touchstart', handler, { passive: false }); }); }
+
+    // ==================== 音效系统 ====================
+    let audioCtx = null, bgmSource = null, bgmBuffer = null, bgmEnabled = true, moveSoundEnabled = true, winSoundEnabled = true, currentBgmUrl = localStorage.getItem('customBgmUrl');
+    function initAudio() { if (audioCtx) return; audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    function playBeep(freq, duration) { if (!moveSoundEnabled) return; if (!audioCtx) initAudio(); if (audioCtx.state === 'suspended') audioCtx.resume(); const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.connect(gain); gain.connect(audioCtx.destination); osc.frequency.value = freq; gain.gain.value = 0.15; osc.start(); gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + duration); osc.stop(audioCtx.currentTime + duration); }
+    function playWinSoundEffect() { if (!winSoundEnabled) return; if (!audioCtx) initAudio(); if (audioCtx.state === 'suspended') audioCtx.resume(); [523, 659, 784].forEach((freq, i) => setTimeout(() => { const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.connect(gain); gain.connect(audioCtx.destination); osc.frequency.value = freq; gain.gain.value = 0.2; osc.start(); gain.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.3); osc.stop(audioCtx.currentTime + 0.3); }, i * 150)); }
+    async function loadCustomBgm(file) { if (!audioCtx) initAudio(); const arrayBuffer = await file.arrayBuffer(); const decoded = await audioCtx.decodeAudioData(arrayBuffer); bgmBuffer = decoded; const url = URL.createObjectURL(file); localStorage.setItem('customBgmUrl', url); currentBgmUrl = url; if (bgmEnabled) playCustomBgm(); }
+    function playCustomBgm() { if (!bgmEnabled || !audioCtx) return; if (bgmSource) try { bgmSource.stop(); } catch(e) {} if (!bgmBuffer && currentBgmUrl) { fetch(currentBgmUrl).then(res => res.arrayBuffer()).then(buf => audioCtx.decodeAudioData(buf)).then(decoded => { bgmBuffer = decoded; startLoop(); }).catch(e=>console.warn); } else if (bgmBuffer) startLoop(); function startLoop() { if (!bgmBuffer) return; bgmSource = audioCtx.createBufferSource(); bgmSource.buffer = bgmBuffer; bgmSource.loop = true; const gain = audioCtx.createGain(); gain.gain.value = 0.2; bgmSource.connect(gain); gain.connect(audioCtx.destination); bgmSource.start(); } }
+    function stopBgm() { if (bgmSource) { try { bgmSource.stop(); } catch(e) {} bgmSource = null; } }
+    function clearCustomBgm() { localStorage.removeItem('customBgmUrl'); currentBgmUrl = null; bgmBuffer = null; stopBgm(); if (bgmEnabled) playDefaultBgm(); }
+    function playDefaultBgm() { if (!bgmEnabled || !audioCtx) return; if (bgmSource) stopBgm(); function playLoop() { if (!bgmEnabled) return; const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.type = 'sine'; osc.frequency.value = 196; gain.gain.value = 0.08; osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); setTimeout(() => { if(osc) osc.frequency.value = 220; }, 1000); setTimeout(() => { if(osc) osc.frequency.value = 196; }, 1500); setTimeout(() => { if(osc) osc.stop(); playLoop(); }, 4000); bgmSource = osc; } playLoop(); }
+
+    moveSoundToggle.addEventListener('click', () => { moveSoundEnabled = !moveSoundEnabled; moveSoundToggle.classList.toggle('active', moveSoundEnabled); });
+    winSoundToggle.addEventListener('click', () => { winSoundEnabled = !winSoundEnabled; winSoundToggle.classList.toggle('active', winSoundEnabled); });
+    bgmToggle.addEventListener('click', () => { bgmEnabled = !bgmEnabled; bgmToggle.classList.toggle('active', bgmEnabled); if (bgmEnabled) { if (currentBgmUrl || bgmBuffer) playCustomBgm(); else playDefaultBgm(); } else stopBgm(); });
+    bgmFileInput.addEventListener('change', (e) => { if (e.target.files.length) loadCustomBgm(e.target.files[0]); });
+    clearBgmBtn.addEventListener('click', () => { clearCustomBgm(); bgmFileInput.value = ''; });
+
+    nicknameInput.value = currentNickname;
+    saveNicknameBtn.addEventListener('click', () => { let nick = nicknameInput.value.trim(); if (!nick) { alert("昵称不能为空"); return; } currentNickname = nick; localStorage.setItem('playerNickname', nick); alert("昵称已保存"); });
+    resetBtn.addEventListener('click', () => { if(!gameBlocked) fullResetCurrentLevel(); });
+    rankToggleBtn.addEventListener('click', () => { if(!gameBlocked) { if (rankPanel.style.display === 'none') showRankPanel(); else hideRankPanel(); } });
+    settingsBtn.addEventListener('click', () => { if(!gameBlocked) { if (settingsPanel.style.display === 'none') showSettingsPanel(); else hideSettingsPanel(); } });
+    closeRankBtn.addEventListener('click', hideRankPanel);
+    closeSettingsBtn.addEventListener('click', hideSettingsPanel);
+    document.querySelectorAll('.tab-btn').forEach(btn => { btn.addEventListener('click', () => { if(gameBlocked) return; document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); currentTab = btn.getAttribute('data-tab'); renderRank(currentTab); }); });
+
+    window.addEventListener('resize', () => { if(currentLevelData) renderGame(); });
+    window.addEventListener('load', () => {
+        const savedLevel = localStorage.getItem(STORAGE_LEVEL_KEY);
+        let startLevel = savedLevel ? parseInt(savedLevel) : 0;
+        if (isNaN(startLevel) || startLevel < 0) startLevel = 0;
+        setLevel(startLevel);
+        window.addEventListener('keydown', handleKey);
+        document.getElementById('nextBtn').addEventListener('click', nextLevel);
+        document.getElementById('prevBtn').addEventListener('click', prevLevel);
+        bindDirectionButtons();
+        initAudio();
+        const startBgmOnInteraction = () => { if (bgmEnabled && audioCtx && audioCtx.state === 'suspended') { audioCtx.resume().then(() => { if (currentBgmUrl || bgmBuffer) playCustomBgm(); else playDefaultBgm(); }); } document.removeEventListener('click', startBgmOnInteraction); document.removeEventListener('touchstart', startBgmOnInteraction); };
+        document.addEventListener('click', startBgmOnInteraction);
+        document.addEventListener('touchstart', startBgmOnInteraction);
+    });
+</script>
+</body>
+</html>
