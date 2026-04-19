@@ -115,7 +115,17 @@
             <div class="timer-box">⏱️ 用时 <span id="timerDisplay">0</span> 秒</div>
         </div>
         <div class="rank-area" id="rankDisplay">🏆 段位: 未通关</div>
-
+        <div class="direction-panel">
+            <div class="dpad"><div class="dpad-row"><button class="dir-btn" data-dx="0" data-dy="-1">▲</button></div>
+            <div class="dpad-row"><button class="dir-btn" data-dx="-1" data-dy="0">◀</button><button class="dir-btn" data-dx="0" data-dy="1">▼</button><button class="dir-btn" data-dx="1" data-dy="0">▶</button></div></div>
+        </div>
+        
+        <div class="button-group">
+            <button class="candy-btn prev-btn" id="prevBtn">◀ 上一关</button>
+            <button class="candy-btn reset-btn" id="resetBtn">🔄 重置本关</button>
+            <button class="candy-btn next-btn" id="nextBtn">下一关 ▶</button>
+        </div>
+       
         <div class="nickname-bar">
             <input type="text" id="nicknameInput" class="nickname-input" placeholder="输入昵称 (用于排名)" maxlength="16">
             <button id="saveNicknameBtn" class="nickname-btn">保存昵称</button>
@@ -143,16 +153,6 @@
             <button id="closeSettingsBtn" class="close-btn">关闭</button>
         </div>
 
-        <div class="button-group">
-            <button class="candy-btn prev-btn" id="prevBtn">◀ 上一关</button>
-            <button class="candy-btn reset-btn" id="resetBtn">🔄 重置本关</button>
-            <button class="candy-btn next-btn" id="nextBtn">下一关 ▶</button>
-        </div>
-
-        <div class="direction-panel">
-            <div class="dpad"><div class="dpad-row"><button class="dir-btn" data-dx="0" data-dy="-1">▲</button></div>
-            <div class="dpad-row"><button class="dir-btn" data-dx="-1" data-dy="0">◀</button><button class="dir-btn" data-dx="0" data-dy="1">▼</button><button class="dir-btn" data-dx="1" data-dy="0">▶</button></div></div>
-        </div>
         <footer>✨ 根据中文意思，将字母箱子推到⭐目标线上拼出英文单词 ✨</footer>
     </div>
 </div>
